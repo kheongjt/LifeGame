@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>上帝视角 - 游戏控制台</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <style>
+        :root { --primary: #4361ee; --success: #2ecc71; --warning: #f39c12; --danger: #e74c3c; --dark: #2b2d42; --light: #f8f9fa; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #e5e5e5; margin: 0; padding: 20px; color: var(--dark); }
+        .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h2, h3, h4 { margin-top: 0; color: var(--dark); }
+        button { padding: 12px 20px; margin: 5px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; color: white; }
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-start { background-color: var(--success); font-size: 16px; }
+        .btn-stage { background-color: var(--primary); }
+        .btn-board { background-color: var(--warning); color: #fff; }
+        .btn-end { background-color: var(--danger); width: 100%; margin-top: 15px; font-size: 1.1em; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: var(--light); }
+        .room-code { font-size: 2em; color: var(--primary); letter-spacing: 2px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h2>🎮 游戏主控台</h2>
+        <button class="btn-start" onclick="createRoom()">🚀 创建新房间</button>
+        <h3 id="room-display" class="room-code">等待创建...</h3>
+
+        <div id="controls" style="display:none; margin-top: 20px;">
+            <h4>上半场推送 (无锁)</h4>
+            <div style="display: flex; flex-wrap: wrap;">
+                <button class="btn-stage" onclick="pushStage('1')">第 1 关</button>
+                <button class="btn-stage" onclick="pushStage('2')">第 2 关</button>
+                <button class="btn-stage" onclick="pushStage('3')">第 3 关</button>
+                <button class="btn-stage" onclick="pushStage('4')">第 4 关</button>
+                <button class="btn-stage" onclick="pushStage('4.5')" style="background-color: #8e44ad;">4.5 娱乐局</button>
+            </div>
+            
+            <h4 style="margin-top: 20px;">中场排行榜 (仅展示现实利益)</h4>
+            <button class="btn-board" onclick="pushStage('leaderboard_partial')">📊 推送排行榜</button>
+
+            <h4 style="margin-top: 20px;">下半场推送 (带锁)</h4>
+            <div style="display: flex; flex-wrap: wrap;">
+                <button class="btn-stage" onclick="pushStage('5')">第 5 关</button>
+                <button class="btn-stage" onclick="pushStage('6')">第 6 关</button>
+                <button class="btn-stage" onclick="pushStage('7')">第 7 关</button>
+                <button class="btn-stage" onclick="pushStage('8')">第 8 关</button>
+            </div>
+
+            <h4 style="margin-top: 20px;">终极拷问期 (双重锁)</h4>
+            <div style="display: flex; flex-wrap: wrap;">
+                <button class="btn-stage" style="background-color: #34495e;" onclick="pushStage('9')">第 9 关</button>
+                <button class="btn-stage" style="background-color: #34495e;" onclick="pushStage('10')">第 10 关</button>
+            </div>
+
+            <button class="btn-end" onclick="pushStage('leaderboard_full')">🚨 第10关结束：全量大揭晓</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🏆 实时排行榜监控</h2>
+        <p style="color: #666; font-size: 14px;">(系统将自动按“现实利益”降序排名)</p>
+        <table id="leaderboard-table">
+            <thead>
+                <tr>
+                    <th>组别</th>
+                    <th>现实利益</th>
+                    <th style="color:var(--danger)">慈心分(隐藏)</th>
+                    <th>觉察力</th>
+                    <th>包容力</th>
+                </tr>
+            </thead>
+            <tbody id="teams-data">
+                <tr><td colspan="5">等待玩家加入...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCjg66it1o-kDAMJHi8LnMIDenY0JLEL98",
+      authDomain: "life-game-4a0da.firebaseapp.com",
+      databaseURL: "https://life-game-4a0da-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "life-game-4a0da",
+      storageBucket: "life-game-4a0da.firebasestorage.app",
+      messagingSenderId: "538025029324",
+      appId: "1:538025029324:web:a07d71ae5a02c727141c69",
+      measurementId: "G-07XZLZ2ZMD"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    let adminRoom = "";
+
+    function createRoom() {
+        adminRoom = Math.random().toString(36).substring(2, 6).toUpperCase();
+        document.getElementById('room-display').innerText = `房间号: ${adminRoom}`;
+        document.getElementById('controls').style.display = 'block';
+        
+        db.ref(`rooms/${adminRoom}/teams`).on('value', snapshot => {
+            let data = snapshot.val();
+            if(!data) return;
+            
+            let tbody = document.getElementById('teams-data');
+            tbody.innerHTML = '';
+            
+            let teamsArray = Object.keys(data).map(key => ({ name: key, ...data[key] }));
+            teamsArray.sort((a, b) => b.reality - a.reality);
+            
+            teamsArray.forEach((team, index) => {
+                let rankIcon = "";
+                if (index === 0) rankIcon = `<span style="font-size:1.3em;">🥇</span> `;
+                else if (index === 1) rankIcon = `<span style="font-size:1.3em;">🥈</span> `;
+                else if (index === 2) rankIcon = `<span style="font-size:1.3em;">🥉</span> `;
+                else rankIcon = `<span style="color:#000; font-size:1.2em; font-weight:bold; margin-right:8px;">${index + 1}.</span>`;
+
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-size:1.1em;">${rankIcon}<strong>${team.name}</strong></td>
+                    <td style="color:var(--primary); font-size: 1.4em; font-weight:bold;">${team.reality}</td>
+                    <td style="color:var(--danger); font-size: 1.4em; font-weight:bold;">${team.compassion}</td>
+                    <td style="font-size: 1.2em; font-weight:bold;">${team.awareness}</td>
+                    <td style="font-size: 1.2em; font-weight:bold;">${team.tolerance}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        });
+    }
+
+    function pushStage(stageId) {
+        db.ref(`rooms/${adminRoom}`).update({ currentStage: stageId });
+    }
+</script>
+</body>
+</html>
