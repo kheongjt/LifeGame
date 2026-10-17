@@ -11,7 +11,10 @@
         :root { --bg: #1a1a2e; --card: #16213e; --primary: #0f3460; --accent: #e94560; --text: #e0e0e0; --warning: #f39c12; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg); color: var(--text); padding: 15px; margin: 0; display: flex; justify-content: center; min-height: 100vh; }
         .app-container { width: 100%; max-width: 500px; }
-        .card { background: var(--card); padding: 25px; border-radius: 16px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); margin-bottom: 20px; }
+        
+        /* 关键修改 1：给 card 加上 position: relative，让莲花可以跟着卡片定位，而不是跟着屏幕跑 */
+        .card { position: relative; background: var(--card); padding: 25px; border-radius: 16px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); margin-bottom: 20px; }
+        
         h2, h3 { color: white; margin-top: 0; }
         input { width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid #333; border-radius: 8px; background: #0f172a; color: white; font-size: 16px; box-sizing: border-box; }
         button { width: 100%; padding: 16px; margin-bottom: 12px; border: none; border-radius: 10px; background-color: var(--primary); color: white; font-size: 16px; font-weight: 500; text-align: left; transition: 0.2s; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.2); line-height: 1.5; }
@@ -25,8 +28,27 @@
         .leaderboard-table { width: 100%; text-align: left; border-collapse: collapse; margin-top: 15px; }
         .leaderboard-table th, .leaderboard-table td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
         
-        /* 放在标题旁边的莲花样式 */
-        .inline-lotus { float: left; margin-right: 15px; margin-bottom: 10px; width: 70px; height: 70px; display: none; }
+        /* 关键修改 2：莲花位置双端自动适配 */
+        .corner-lotus { 
+            position: absolute; 
+            top: 55%; 
+            right: -80px; /* 电脑端：精准定位到你画红圈的位置（卡片外部右侧） */
+            transform: translateY(-50%); 
+            z-index: 50; 
+            pointer-events: none; /* 穿透点击，绝不挡按钮 */
+        }
+        
+        /* 当屏幕小于 720px（手机/平板）时自动执行这段代码 */
+        @media (max-width: 720px) {
+            .corner-lotus {
+                top: auto;
+                bottom: 25px;
+                right: 15px; /* 手机端：因为没有外部黑框，自动缩进到卡片内部右边缘，悬浮在按钮旁 */
+                transform: none;
+                opacity: 0.85; /* 稍微透明一点融入背景 */
+            }
+        }
+        
         .lotus-petal { transform-origin: 50px 50px; transform: scale(0); animation: popPetal 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes popPetal { to { transform: scale(1); } }
     </style>
@@ -49,16 +71,13 @@
             <span>流量: <strong id="ui-reality" style="color:#4ade80; font-size: 1.2em;">0</strong></span>
         </div>
 
-        <!-- 莲花移到了这里，使用 float 靠左对齐 -->
-        <div id="inline-lotus" class="inline-lotus"></div>
-
         <h3 id="stage-title" style="color: var(--accent); font-size: 1.5em; margin-bottom: 15px; margin-top: 0;">等待开始...</h3>
         <p id="stage-desc" style="line-height: 1.6; color: #ddd; font-size: 1.2em; margin-bottom: 25px;"></p>
         
-        <!-- 清除浮动，确保下面的选项按钮不会挤到莲花旁边 -->
-        <div style="clear: both;"></div>
-
         <div id="options-container" style="margin-top: 15px;"></div>
+        
+        <!-- 莲花代码现在被收纳在了卡片 (card) 内部，跟着卡片一起定位 -->
+        <div id="corner-lotus" class="corner-lotus"></div>
     </div>
 </div>
 
@@ -100,7 +119,7 @@
 
     // 更新莲花花瓣
     function updateLotus(score) {
-        const container = document.getElementById('inline-lotus');
+        const container = document.getElementById('corner-lotus');
         let petalCount = Math.floor(score / 10);
         
         if (petalCount <= 0) {
@@ -158,7 +177,7 @@
             document.getElementById('ui-tolerance').innerText = myStats.tolerance;
             
             if (!stage || (!stage.includes("leaderboard") && GAME_STAGES[stage])) {
-                document.getElementById('inline-lotus').style.display = 'block';
+                document.getElementById('corner-lotus').style.display = 'block';
                 updateLotus(myStats.compassion); 
             }
 
@@ -229,7 +248,7 @@
     }
 
     function renderLeaderboard(isFull) {
-        document.getElementById('inline-lotus').style.display = 'none';
+        document.getElementById('corner-lotus').style.display = 'none';
         
         document.getElementById('stage-title').innerText = isFull ? "🚨 终局排行榜：隐藏属性大揭晓" : "📊 中场排行榜";
         document.getElementById('stage-desc').innerText = isFull ? "（不再进行排名，仅展示各队伍的最终数值）" : "查看各队伍目前的进度表现。";
