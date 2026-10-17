@@ -9,12 +9,12 @@ const GAME_STAGES = {
         ]
     },
     2: {
-        title: "第 2 关（日常 - 课业影片剪辑）",
-        description: "小组作业去社区做采访，后期的影片剪辑和特效全是你一个人熬夜做的。汇报时，组内全程“潜水”的同学滔滔不绝地讲解，把功劳全揽在自己身上。",
+        title: "第 2 关（网红日常 - 合作影片的署名风波）",
+        description: "你和另一位大V合作拍了一期爆款视频，后期的剪辑和特效全是你熬夜做的。但对方发布时，完全没提到你的名字，还在评论区暗示全是他一个人通宵剪的，把流量全揽在自己身上。",
         options: [
-            { id: "A", text: "当众打开工程文件，拆穿他的谎言，证明都是你做的。", req_awareness: 0, req_tolerance: 0, consequence: "你拿回了高分，但场面极其难堪，教授对你们团队的内部矛盾感到失望。", reality: 10, compassion: -10, awareness: 2, tolerance: -2 },
-            { id: "B", text: "保持沉默，觉得反正分数是打给小组的，把委屈憋在心里。", req_awareness: 0, req_tolerance: 0, consequence: "事情平安糊弄过去，但这缺乏维护事实底线的勇气，对方下次还会利用你。", reality: 0, compassion: -5, awareness: -2, tolerance: 1 },
-            { id: "C", text: "等他讲完，平和地接过麦克风，感谢他的总结，详细展示剪辑思路。", req_awareness: 0, req_tolerance: 0, consequence: "你的实力不言自明，既澄清了事实，又用不卑不亢的态度化解了尴尬。", reality: 10, compassion: 15, awareness: 2, tolerance: 2 }
+            { id: "A", text: "直接在评论区开撕，放出工程文件实锤对方抢功。", req_awareness: 0, req_tolerance: 0, consequence: "你抢回了部分热度，但也卷入了难看的骂战。路人觉得你们在联合炒作，粉黑参半。", reality: 10, compassion: -10, awareness: 2, tolerance: -2 },
+            { id: "B", text: "保持沉默，觉得对方粉丝多，得罪了没好处，把委屈憋在心里。", req_awareness: 0, req_tolerance: 0, consequence: "事情平安过去，但你成了免费劳动力，对方下次还会继续吸你的血。", reality: 0, compassion: -5, awareness: -2, tolerance: 1 },
+            { id: "C", text: "转发对方视频感谢合作，并顺势在自己频道发布一期“爆款幕后剪辑教学”。", req_awareness: 0, req_tolerance: 0, consequence: "不仅澄清了事实，还展现了高情商和硬核实力，直接吸了一大波高质量粉丝。", reality: 10, compassion: 15, awareness: 2, tolerance: 2 }
         ]
     },
     3: {
@@ -72,12 +72,12 @@ const GAME_STAGES = {
         ]
     },
     8: {
-        title: "第 8 关（日常 - IT软件实习面试）",
-        description: "面试官误以为你精通某项高级技术，其实你只懂皮毛。如果你承认，可能会失去这个梦寐以求的Offer。",
+        title: "第 8 关（网红危机 - 虚假产品的带货诱惑）",
+        description: "一个开出天价推广费的品牌方找你带货，但你试用后发现产品有明显的烂脸风险。如果拒绝，你将失去这个月冲榜最大的一笔资金支持和公关流量。",
         options: [
-            { id: "A", text: "顺水推舟，满口答应自己很熟练，先混进去再说。", req_awareness: 0, req_tolerance: 0, consequence: "入职第一周原形毕露，不仅被辞退，还在HR圈留下了不诚信黑记录。", reality: -20, compassion: -20, awareness: -2, tolerance: -1 },
-            { id: "B", text: "支支吾吾，试图转移话题，掩饰过去。", req_awareness: 0, req_tolerance: 0, consequence: "面试官看出了心虚。你只得到了打杂的边缘位置，错失成长机会。", reality: -5, compassion: -5, awareness: -1, tolerance: 0 },
-            { id: "C", text: "坦白只懂基础，清晰画出知识边界，展示高效自学方法论。", req_awareness: 6, req_tolerance: 0, consequence: "公司极其欣赏你诚实的品格，特批设立了一个极具潜力的管培生岗位。", reality: 10, compassion: 15, awareness: 2, tolerance: 1 }
+            { id: "A", text: "顺水推舟，照着公关稿猛吹产品，先把钱和流量赚了再说。", req_awareness: 0, req_tolerance: 0, consequence: "你当月流量爆棚，但随后大批粉丝烂脸维权，你遭到了全网抵制和封杀。", reality: -20, compassion: -20, awareness: -2, tolerance: -1 },
+            { id: "B", text: "支支吾吾地推脱，不明确拒绝也不敢得罪，试图拖延过去。", req_awareness: 0, req_tolerance: 0, consequence: "品牌方觉得你耍大牌，在MCN圈子里抱团打压你，你错失了其他好机会。", reality: -5, compassion: -5, awareness: -1, tolerance: 0 },
+            { id: "C", text: "明确拒绝，并顶着压力做了一期“如何避坑劣质产品”的硬核科普视频。", req_awareness: 6, req_tolerance: 0, consequence: "被品牌方发律师函威胁，但你的真实与客观让粉丝信任度彻底爆表，被官媒点名表扬。", reality: 10, compassion: 15, awareness: 2, tolerance: 1 }
         ]
     },
     9: {

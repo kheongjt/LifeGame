@@ -28,7 +28,7 @@
 
 <div class="container">
     <div class="card">
-        <h2>🎮 游戏主控台</h2>
+        <h2>🎮 游戏主控台 (M型网红版)</h2>
         <button class="btn-start" onclick="createRoom()">🚀 创建新房间</button>
         <h3 id="room-display" class="room-code">等待创建...</h3>
 
@@ -36,13 +36,13 @@
             <h4>上半场推送 (无锁)</h4>
             <div style="display: flex; flex-wrap: wrap;">
                 <button class="btn-stage" onclick="pushStage('1')">第 1 关</button>
-                <button class="btn-stage" onclick="pushStage('2')">第 2 关</button>
+                <button class="btn-stage" onclick="pushStage('2')">第 2 关 (网红题)</button>
                 <button class="btn-stage" onclick="pushStage('3')">第 3 关</button>
                 <button class="btn-stage" onclick="pushStage('4')">第 4 关</button>
                 <button class="btn-stage" onclick="pushStage('4.5')" style="background-color: #8e44ad;">4.5 娱乐局</button>
             </div>
             
-            <h4 style="margin-top: 20px;">中场排行榜 (仅展示现实利益)</h4>
+            <h4 style="margin-top: 20px;">中场排行榜 (仅展示流量)</h4>
             <button class="btn-board" onclick="pushStage('leaderboard_partial')">📊 推送排行榜</button>
 
             <h4 style="margin-top: 20px;">下半场推送 (带锁)</h4>
@@ -50,7 +50,7 @@
                 <button class="btn-stage" onclick="pushStage('5')">第 5 关</button>
                 <button class="btn-stage" onclick="pushStage('6')">第 6 关</button>
                 <button class="btn-stage" onclick="pushStage('7')">第 7 关</button>
-                <button class="btn-stage" onclick="pushStage('8')">第 8 关</button>
+                <button class="btn-stage" onclick="pushStage('8')">第 8 关 (网红题)</button>
             </div>
 
             <h4 style="margin-top: 20px;">终极拷问期 (双重锁)</h4>
@@ -65,12 +65,12 @@
 
     <div class="card">
         <h2>🏆 实时排行榜监控</h2>
-        <p style="color: #666; font-size: 14px;">(系统将自动按“现实利益”降序排名)</p>
+        <p style="color: #666; font-size: 14px;">(系统将自动按“流量”降序排名)</p>
         <table id="leaderboard-table">
             <thead>
                 <tr>
                     <th>组别</th>
-                    <th>现实利益</th>
+                    <th>流量</th>
                     <th style="color:var(--danger)">慈心分(隐藏)</th>
                     <th>觉察力</th>
                     <th>包容力</th>
