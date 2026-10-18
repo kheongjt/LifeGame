@@ -27,7 +27,7 @@
         .leaderboard-table { width: 100%; text-align: left; border-collapse: collapse; margin-top: 15px; }
         .leaderboard-table th, .leaderboard-table td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
         
-        /* 电脑端：保持完美悬浮在右侧红圈位置 */
+        /* 电脑端：保持悬浮在右侧红圈位置 */
         .corner-lotus { 
             position: absolute; 
             top: 55%; 
@@ -37,17 +37,18 @@
             pointer-events: none; 
         }
         
-        /* 手机端适配：放在选项的下方，并且居中 */
+        /* 手机端适配：放在选项下方，并靠右对齐 (flex-end) */
         @media (max-width: 720px) {
             .corner-lotus {
-                position: relative; /* 取消悬浮，回到正常的排版流中 */
+                position: relative;
                 top: auto;
                 right: auto;
                 bottom: auto;
                 transform: none;
-                margin-top: 25px; /* 和上面的选项拉开一段距离 */
+                margin-top: 25px; 
                 display: flex;
-                justify-content: center; /* 让莲花居中 */
+                justify-content: flex-end; /* 让莲花靠右 */
+                padding-right: 15px; /* 加一点右边距，不要完全贴死边缘 */
                 opacity: 0.9;
             }
         }
@@ -79,7 +80,7 @@
         
         <div id="options-container" style="margin-top: 15px;"></div>
         
-        <!-- 手机端时，这个莲花会自动排在选项下方居中 -->
+        <!-- 手机端时，这个莲花会自动排在选项下方靠右 -->
         <div id="corner-lotus" class="corner-lotus"></div>
     </div>
 </div>
@@ -157,43 +158,56 @@
 
     function joinRoom() {
         currentRoom = document.getElementById('roomCode').value.toUpperCase();
-        myTeam = document.getElementById('teamName').value;
+        // 使用 trim() 去除名字前后的多余空格
+        myTeam = document.getElementById('teamName').value.trim();
         if(!currentRoom || !myTeam) return alert("请填写完整！");
 
-        let randomRole = ROLES[Math.floor(Math.random() * ROLES.length)];
-        myStats.awareness = randomRole.awareness;
-        myStats.tolerance = randomRole.tolerance;
-        myStats.roleName = randomRole.name;
-        myStats.compassion = 0; 
-
-        db.ref(`rooms/${currentRoom}/teams/${myTeam}`).set(myStats);
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('game-screen').style.display = 'block';
-
-        db.ref(`rooms/${currentRoom}/currentStage`).on('value', (snapshot) => {
-            let stage = snapshot.val();
-            document.getElementById('my-stats').style.display = 'flex';
-            document.getElementById('ui-role').innerText = myStats.roleName;
-            document.getElementById('ui-reality').innerText = myStats.reality;
-            document.getElementById('ui-awareness').innerText = myStats.awareness;
-            document.getElementById('ui-tolerance').innerText = myStats.tolerance;
-            
-            if (!stage || (!stage.includes("leaderboard") && GAME_STAGES[stage])) {
-                document.getElementById('corner-lotus').style.display = 'block';
-                updateLotus(myStats.compassion); 
+        // 核心修改：检查队伍名字是否已经被别人占用
+        db.ref(`rooms/${currentRoom}/teams/${myTeam}`).once('value').then(snapshot => {
+            if (snapshot.exists()) {
+                // 如果存在，直接拦截并弹窗提示
+                alert("⚠️ 这个组别名称已经被其他队伍使用了，请换一个名称！");
+                return;
             }
 
-            if (stage === "leaderboard_partial") {
-                renderLeaderboard(false);
-            } else if (stage === "leaderboard_full") {
-                renderLeaderboard(true);
-            } else if (stage && GAME_STAGES[stage]) {
-                renderStage(stage);
-            } else {
-                document.getElementById('stage-title').innerText = "游戏暂未开始";
-                document.getElementById('stage-desc').innerText = "请留意大屏幕指示。";
-                document.getElementById('options-container').innerHTML = "";
-            }
+            // 如果名字没被用过，正常随机分配角色并初始化数据
+            let randomRole = ROLES[Math.floor(Math.random() * ROLES.length)];
+            myStats.awareness = randomRole.awareness;
+            myStats.tolerance = randomRole.tolerance;
+            myStats.roleName = randomRole.name;
+            myStats.compassion = 0; 
+            myStats.reality = 0; // 重置流量
+
+            db.ref(`rooms/${currentRoom}/teams/${myTeam}`).set(myStats);
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'block';
+
+            // 开始监听舞台状态
+            db.ref(`rooms/${currentRoom}/currentStage`).on('value', (snapshot) => {
+                let stage = snapshot.val();
+                document.getElementById('my-stats').style.display = 'flex';
+                document.getElementById('ui-role').innerText = myStats.roleName;
+                document.getElementById('ui-reality').innerText = myStats.reality;
+                document.getElementById('ui-awareness').innerText = myStats.awareness;
+                document.getElementById('ui-tolerance').innerText = myStats.tolerance;
+                
+                if (!stage || (!stage.includes("leaderboard") && GAME_STAGES[stage])) {
+                    document.getElementById('corner-lotus').style.display = 'flex';
+                    updateLotus(myStats.compassion); 
+                }
+
+                if (stage === "leaderboard_partial") {
+                    renderLeaderboard(false);
+                } else if (stage === "leaderboard_full") {
+                    renderLeaderboard(true);
+                } else if (stage && GAME_STAGES[stage]) {
+                    renderStage(stage);
+                } else {
+                    document.getElementById('stage-title').innerText = "游戏暂未开始";
+                    document.getElementById('stage-desc').innerText = "请留意大屏幕指示。";
+                    document.getElementById('options-container').innerHTML = "";
+                }
+            });
         });
     }
 
