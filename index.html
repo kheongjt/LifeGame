@@ -12,7 +12,6 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg); color: var(--text); padding: 15px; margin: 0; display: flex; justify-content: center; min-height: 100vh; }
         .app-container { width: 100%; max-width: 500px; }
         
-        /* 关键修改 1：给 card 加上 position: relative，让莲花可以跟着卡片定位，而不是跟着屏幕跑 */
         .card { position: relative; background: var(--card); padding: 25px; border-radius: 16px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); margin-bottom: 20px; }
         
         h2, h3 { color: white; margin-top: 0; }
@@ -28,24 +27,28 @@
         .leaderboard-table { width: 100%; text-align: left; border-collapse: collapse; margin-top: 15px; }
         .leaderboard-table th, .leaderboard-table td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
         
-        /* 关键修改 2：莲花位置双端自动适配 */
+        /* 电脑端：保持完美悬浮在右侧红圈位置 */
         .corner-lotus { 
             position: absolute; 
             top: 55%; 
-            right: -80px; /* 电脑端：精准定位到你画红圈的位置（卡片外部右侧） */
+            right: -80px; 
             transform: translateY(-50%); 
             z-index: 50; 
-            pointer-events: none; /* 穿透点击，绝不挡按钮 */
+            pointer-events: none; 
         }
         
-        /* 当屏幕小于 720px（手机/平板）时自动执行这段代码 */
+        /* 手机端适配：放在选项的下方，并且居中 */
         @media (max-width: 720px) {
             .corner-lotus {
+                position: relative; /* 取消悬浮，回到正常的排版流中 */
                 top: auto;
-                bottom: 25px;
-                right: 15px; /* 手机端：因为没有外部黑框，自动缩进到卡片内部右边缘，悬浮在按钮旁 */
+                right: auto;
+                bottom: auto;
                 transform: none;
-                opacity: 0.85; /* 稍微透明一点融入背景 */
+                margin-top: 25px; /* 和上面的选项拉开一段距离 */
+                display: flex;
+                justify-content: center; /* 让莲花居中 */
+                opacity: 0.9;
             }
         }
         
@@ -76,7 +79,7 @@
         
         <div id="options-container" style="margin-top: 15px;"></div>
         
-        <!-- 莲花代码现在被收纳在了卡片 (card) 内部，跟着卡片一起定位 -->
+        <!-- 手机端时，这个莲花会自动排在选项下方居中 -->
         <div id="corner-lotus" class="corner-lotus"></div>
     </div>
 </div>
@@ -117,7 +120,6 @@
     let myTeam = "";
     let myStats = { reality: 0, compassion: 0, awareness: 0, tolerance: 0, roleName: "" };
 
-    // 更新莲花花瓣
     function updateLotus(score) {
         const container = document.getElementById('corner-lotus');
         let petalCount = Math.floor(score / 10);
