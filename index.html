@@ -27,7 +27,6 @@
         .leaderboard-table { width: 100%; text-align: left; border-collapse: collapse; margin-top: 15px; }
         .leaderboard-table th, .leaderboard-table td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
         
-        /* 电脑端：保持悬浮在右侧红圈位置 */
         .corner-lotus { 
             position: absolute; 
             top: 55%; 
@@ -37,7 +36,6 @@
             pointer-events: none; 
         }
         
-        /* 手机端适配：放在选项下方，并靠右对齐 (flex-end) */
         @media (max-width: 720px) {
             .corner-lotus {
                 position: relative;
@@ -47,8 +45,8 @@
                 transform: none;
                 margin-top: 25px; 
                 display: flex;
-                justify-content: flex-end; /* 让莲花靠右 */
-                padding-right: 15px; /* 加一点右边距，不要完全贴死边缘 */
+                justify-content: flex-end; 
+                padding-right: 15px; 
                 opacity: 0.9;
             }
         }
@@ -80,7 +78,6 @@
         
         <div id="options-container" style="margin-top: 15px;"></div>
         
-        <!-- 手机端时，这个莲花会自动排在选项下方靠右 -->
         <div id="corner-lotus" class="corner-lotus"></div>
     </div>
 </div>
@@ -108,14 +105,6 @@
     
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-
-    const ROLES = [
-        { name: "理智型", awareness: 3, tolerance: 1 },
-        { name: "老好人型", awareness: 1, tolerance: 3 },
-        { name: "中庸型", awareness: 2, tolerance: 2 },
-        { name: "固执型", awareness: 4, tolerance: 0 },
-        { name: "溺爱型", awareness: 0, tolerance: 4 }
-    ];
 
     let currentRoom = "";
     let myTeam = "";
@@ -158,31 +147,27 @@
 
     function joinRoom() {
         currentRoom = document.getElementById('roomCode').value.toUpperCase();
-        // 使用 trim() 去除名字前后的多余空格
         myTeam = document.getElementById('teamName').value.trim();
         if(!currentRoom || !myTeam) return alert("请填写完整！");
 
-        // 核心修改：检查队伍名字是否已经被别人占用
         db.ref(`rooms/${currentRoom}/teams/${myTeam}`).once('value').then(snapshot => {
             if (snapshot.exists()) {
-                // 如果存在，直接拦截并弹窗提示
                 alert("⚠️ 这个组别名称已经被其他队伍使用了，请换一个名称！");
                 return;
             }
 
-            // 如果名字没被用过，正常随机分配角色并初始化数据
-            let randomRole = ROLES[Math.floor(Math.random() * ROLES.length)];
-            myStats.awareness = randomRole.awareness;
-            myStats.tolerance = randomRole.tolerance;
+            // 【关键修改点：从外部的 gameData 获取角色列表】
+            let randomRole = gameData.roles[Math.floor(Math.random() * gameData.roles.length)];
+            myStats.awareness = randomRole.initAwareness;
+            myStats.tolerance = randomRole.initCompassion;
             myStats.roleName = randomRole.name;
             myStats.compassion = 0; 
-            myStats.reality = 0; // 重置流量
+            myStats.reality = 0; 
 
             db.ref(`rooms/${currentRoom}/teams/${myTeam}`).set(myStats);
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('game-screen').style.display = 'block';
 
-            // 开始监听舞台状态
             db.ref(`rooms/${currentRoom}/currentStage`).on('value', (snapshot) => {
                 let stage = snapshot.val();
                 document.getElementById('my-stats').style.display = 'flex';
@@ -191,7 +176,10 @@
                 document.getElementById('ui-awareness').innerText = myStats.awareness;
                 document.getElementById('ui-tolerance').innerText = myStats.tolerance;
                 
-                if (!stage || (!stage.includes("leaderboard") && GAME_STAGES[stage])) {
+                // 【关键修改点：判断 stage 是否在新的 levels 数组中】
+                let stageData = gameData.levels.find(l => l.id.toString() === stage);
+                
+                if (!stage || (!stage.includes("leaderboard") && stageData)) {
                     document.getElementById('corner-lotus').style.display = 'flex';
                     updateLotus(myStats.compassion); 
                 }
@@ -200,8 +188,8 @@
                     renderLeaderboard(false);
                 } else if (stage === "leaderboard_full") {
                     renderLeaderboard(true);
-                } else if (stage && GAME_STAGES[stage]) {
-                    renderStage(stage);
+                } else if (stage && stageData) {
+                    renderStage(stageData);
                 } else {
                     document.getElementById('stage-title').innerText = "游戏暂未开始";
                     document.getElementById('stage-desc').innerText = "请留意大屏幕指示。";
@@ -211,29 +199,32 @@
         });
     }
 
-    function renderStage(stageId) {
-        let stageData = GAME_STAGES[stageId];
+    function renderStage(stageData) {
         document.getElementById('stage-title').innerText = stageData.title;
-        document.getElementById('stage-desc').innerText = stageData.description;
+        document.getElementById('stage-desc').innerText = stageData.scenario; // 使用新格式的 scenario
         let container = document.getElementById('options-container');
         container.innerHTML = "";
 
         stageData.options.forEach(opt => {
             let btn = document.createElement('button');
             
-            let isAwarenessLocked = opt.req_awareness > 0 && myStats.awareness < opt.req_awareness;
-            let isToleranceLocked = opt.req_tolerance > 0 && myStats.tolerance < opt.req_tolerance;
-            let hasRequirement = opt.req_awareness > 0 || opt.req_tolerance > 0; 
+            // 使用新格式的 requirements
+            let req_awareness = opt.requirements ? opt.requirements.awareness : 0;
+            let req_tolerance = opt.requirements ? opt.requirements.compassion : 0;
+
+            let isAwarenessLocked = req_awareness > 0 && myStats.awareness < req_awareness;
+            let isToleranceLocked = req_tolerance > 0 && myStats.tolerance < req_tolerance;
+            let hasRequirement = req_awareness > 0 || req_tolerance > 0; 
 
             if (isAwarenessLocked || isToleranceLocked) {
                 btn.disabled = true;
                 btn.className = "locked";
-                btn.innerHTML = `<span style="font-size:1em; font-weight:bold; color:var(--accent);">🔒 属性不足 (需觉察≥${opt.req_awareness} 包容≥${opt.req_tolerance})</span><br><br>${opt.text}`;
+                btn.innerHTML = `<span style="font-size:1em; font-weight:bold; color:var(--accent);">🔒 属性不足 (需觉察≥${req_awareness} 包容≥${req_tolerance})</span><br><br>${opt.action}`;
             } else {
                 if (hasRequirement) {
-                    btn.innerHTML = `<span style="font-size:1em; font-weight:bold; color:#4ade80;">🔓 成功解锁 (需觉察≥${opt.req_awareness} 包容≥${opt.req_tolerance})</span><br><br>${opt.text}`;
+                    btn.innerHTML = `<span style="font-size:1em; font-weight:bold; color:#4ade80;">🔓 成功解锁 (需觉察≥${req_awareness} 包容≥${req_tolerance})</span><br><br>${opt.action}`;
                 } else {
-                    btn.innerText = opt.text;
+                    btn.innerText = opt.action;
                 }
                 btn.onclick = () => submitChoice(opt);
             }
@@ -242,18 +233,18 @@
     }
 
     function submitChoice(opt) {
-        myStats.reality += opt.reality; 
-        myStats.compassion += opt.compassion;
+        myStats.reality += opt.traffic; // 使用新格式的 traffic
+        myStats.compassion += opt.compassionScore; // 使用新格式的 compassionScore
         myStats.awareness += opt.awareness;
-        myStats.tolerance += opt.tolerance;
+        myStats.tolerance += opt.compassion; // 新格式中包容力字段名为 compassion
 
         db.ref(`rooms/${currentRoom}/teams/${myTeam}`).update(myStats);
         document.getElementById('options-container').innerHTML = "<div style='text-align:center; color:#888; padding: 20px; font-size: 1.1em;'>已作出选择，请等待其他队伍...</div>";
 
         document.getElementById('modal-text').innerText = opt.consequence;
-        let rChange = opt.reality >= 0 ? `+${opt.reality}` : opt.reality;
+        let rChange = opt.traffic >= 0 ? `+${opt.traffic}` : opt.traffic;
         document.getElementById('modal-reality').innerText = rChange;
-        document.getElementById('modal-reality').style.color = opt.reality >= 0 ? '#4ade80' : '#f87171';
+        document.getElementById('modal-reality').style.color = opt.traffic >= 0 ? '#4ade80' : '#f87171';
         document.getElementById('modal').style.display = 'flex';
         
         document.getElementById('ui-reality').innerText = myStats.reality;
