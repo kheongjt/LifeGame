@@ -192,20 +192,20 @@ const gameData = {
             scenario: "筹备会议终于熬到了半夜，大家饿得前胸贴后背。群里有人发问：“宵夜到底吃什么？”，这个时候，你在团队里通常是扮演哪种角色？",
             isEntertainment: true,
             options: [
-                { id: "A", action: "主导推土机：“别磨叽了，直接去吃 Tomyam，坐我的车跟我走！”", consequence: "干脆利落！", traffic: 0, compassionScore: 0, awareness: 0, compassion: 0, requirements: { awareness: 0, compassion: 0 } },
-                { id: "B", action: "首席挑刺官：“Tomyam 太辣了吧？Mamak 又太热，而且那家店昨天刚吃过......”", consequence: "精准排雷！", traffic: 0, compassionScore: 0, awareness: 0, compassion: 0, requirements: { awareness: 0, compassion: 0 } },
-                { id: "C", action: "佛系复读机：“我都行，随便，你们决定就好，我都可以~”", consequence: "极致随和！", traffic: 0, compassionScore: 0, awareness: 0, compassion: 0, requirements: { awareness: 0, compassion: 0 } },
-                { id: "D", action: "数据分析师：默默打开手机，开始对比附近三家店的评分、距离、打烊时间和人均消费，准备发表小作文。", consequence: "严谨靠谱！", traffic: 0, compassionScore: 0, awareness: 0, compassion: 0, requirements: { awareness: 0, compassion: 0 } },
-                { id: "E", action: "前排吃瓜组：根本不在乎吃什么，已经在旁边开始拍大家疯狂纠结的丑照，并配上文字发 IG Story 了。", consequence: "情绪价值！", traffic: 0, compassionScore: 0, awareness: 0, compassion: 0, requirements: { awareness: 0, compassion: 0 } }
+                { id: "A", action: "角色 A（主导推土机）：“别磨叽了，直接去吃 Tomyam，坐我的车跟我走！”", consequence: "你拥有绝对的执行力，能够瞬间打破僵局，但偶尔会让想吃别的队友不敢出声。", traffic: 0, compassionScore: 0, awareness: 0, compassion: 0, requirements: { awareness: 0, compassion: 0 } },
+                { id: "B", action: "角色 B（首席挑刺官）：“Tomyam 太辣了吧？Mamak 又太热，而且那家店昨天刚吃过......”", consequence: "你精准排雷，疯狂否决别人的提议却死活给不出新方案，极度容易挨打。", traffic: 0, compassionScore: 0, awareness: 0, compassion: 0, requirements: { awareness: 0, compassion: 0 } },
+                { id: "C", action: "角色 C（佛系复读机）：“我都行，随便，你们决定就好，我都可以~”", consequence: "你提供了极致的随和，但也把做决定的精神内耗全部推给了别人。", traffic: 0, compassionScore: 0, awareness: 0, compassion: 0, requirements: { awareness: 0, compassion: 0 } },
+                { id: "D", action: "角色 D（数据分析师）：默默打开手机，开始对比附近三家店的评分、距离、打烊时间和人均消费，准备发表小作文。", consequence: "你极其严谨靠谱，但等你分析完，大家可能已经饿晕在会议桌上了。", traffic: 0, compassionScore: 0, awareness: 0, compassion: 0, requirements: { awareness: 0, compassion: 0 } },
+                { id: "E", action: "角色 E（前排吃瓜组）：根本不在乎吃什么，已经在旁边开始拍大家疯狂纠结的丑照，并配上文字发 IG Story 了。", consequence: "主打一个提供情绪价值，在团队混乱时完美置身事外。", traffic: 0, compassionScore: 0, awareness: 0, compassion: 0, requirements: { awareness: 0, compassion: 0 } }
             ]
         },
         {
             id: 4.9,
             title: "娱乐关（宵夜局的突发危机）",
-            scenario: "历经千辛万苦，你们终于在宵夜档坐下。等了足足45分钟，累得半死的服务员终于把菜端了上来——结果全错了！你们点的重辣Tomyam变成了清汤米粉，冰奶茶变成了热咖啡，而隔壁比你们晚来的那一桌已经吃上了。\n\n你的任务：请基于你刚才选择的人设，在输入框内打字写下你此刻的第一反应、脱口而出的一句话，或者会做出的真实举动。",
+            scenario: "历经千辛万苦，你们终于在宵夜档坐下。等了足足45分钟，累得半死的服务员终于把菜端了上来——结果全错了！你们点的重辣Tomyam变成了清汤米粉，冰奶茶变成了热咖啡，而隔壁比你们晚来的那一桌已经吃上了。\n\n你的任务：请基于你刚才选择的干饭人角色（{ROLE_4_8}），在输入框内打字写下你此刻的第一反应、脱口而出的一句话，或者会做出的真实举动。",
             isTextInput: true,
             isEntertainment: true,
-            options: [] // 由前端动态渲染 Textarea
+            options: []
         },
         {
             id: 5,

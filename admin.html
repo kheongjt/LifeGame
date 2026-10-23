@@ -27,7 +27,6 @@
 <body>
 
 <div class="container">
-    <!-- 左侧：控制面板 -->
     <div class="card">
         <h2>🎮 游戏主控台 (六大习性版)</h2>
         <button class="btn-start" onclick="createRoom()">🚀 创建新房间</button>
@@ -66,7 +65,6 @@
         </div>
     </div>
 
-    <!-- 右侧：监控大屏 -->
     <div>
         <div class="card" style="margin-bottom: 20px;">
             <h2>🏆 实时排行榜监控</h2>
@@ -116,7 +114,6 @@
         document.getElementById('controls').style.display = 'block';
         db.ref(`rooms/${adminRoom}/settings/manualSelect`).set(false);
         
-        // 监听队伍分数
         db.ref(`rooms/${adminRoom}/teams`).on('value', snapshot => {
             let data = snapshot.val();
             if(!data) return;
@@ -139,21 +136,20 @@
             });
         });
 
-        // 监听历史记录(弹幕)
         db.ref(`rooms/${adminRoom}/history`).on('value', snapshot => {
             let historyData = snapshot.val();
             if(!historyData) return;
             let ansBox = document.getElementById('answers-data');
             ansBox.innerHTML = '';
             
-            // 获取当前关卡
             db.ref(`rooms/${adminRoom}/currentStage`).once('value').then(s => {
                 let current = s.val();
                 if(!current) return;
                 
                 Object.keys(historyData).forEach(teamName => {
                     let teamRecords = historyData[teamName];
-                    let currentRecord = teamRecords[`stage_${current}`];
+                    let safeStageId = current.toString().replace('.', '_');
+                    let currentRecord = teamRecords[`stage_${safeStageId}`];
                     
                     if(currentRecord) {
                         let textNode = document.createElement('div');
@@ -164,7 +160,8 @@
                         textNode.style.borderLeft = "4px solid #8e44ad";
                         
                         let displayAction = currentRecord.action;
-                        if(displayAction.includes("：")) displayAction = displayAction.split("：")[1]; // 处理4.8的前缀
+                        // 处理 4.8 关卡冗长前缀显示在弹幕上的视觉效果
+                        if(displayAction.includes("：“")) displayAction = displayAction.split("：“")[1].replace("”", "");
                         
                         textNode.innerHTML = `<strong style="color:var(--primary)">[${teamName}]</strong> ${displayAction}`;
                         ansBox.appendChild(textNode);

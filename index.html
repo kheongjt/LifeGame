@@ -96,18 +96,23 @@
     let myStats = { reality: 0, compassion: 0, awareness: 0, tolerance: 0, roleName: "" };
     let selectedRoleId = null;
     let isManualSelectMode = false;
+    
     let currentStageId = null;
+    let choice4_8 = ""; 
+    let currentRoomListener = null; 
 
-    // 监听房间模式输入
     document.getElementById('roomCode').addEventListener('input', (e) => {
         let room = e.target.value.toUpperCase();
         if(room.length >= 4) {
-            db.ref(`rooms/${room}/settings/manualSelect`).once('value').then(snap => {
+            if(currentRoomListener) currentRoomListener.off(); 
+            currentRoomListener = db.ref(`rooms/${room}/settings/manualSelect`);
+            currentRoomListener.on('value', snap => {
                 isManualSelectMode = snap.val() === true;
                 if(isManualSelectMode) {
                     renderRoleSelection();
                 } else {
                     document.getElementById('role-selection-area').style.display = 'none';
+                    selectedRoleId = null;
                 }
             });
         }
@@ -194,12 +199,18 @@
 
     function renderStage(stageData) {
         document.getElementById('stage-title').innerText = stageData.title;
-        document.getElementById('stage-desc').innerText = stageData.scenario;
+        
+        let descText = stageData.scenario;
+        if (stageData.id == 4.9) {
+            let roleText = choice4_8 ? choice4_8 : "刚才选择的角色";
+            descText = descText.replace("{ROLE_4_8}", roleText);
+        }
+        document.getElementById('stage-desc').innerText = descText;
+
         let container = document.getElementById('options-container');
         container.innerHTML = "";
 
         if (stageData.isTextInput) {
-            // 第4.9关 输入框模式
             let textarea = document.createElement('textarea');
             textarea.id = "textInputAnswer";
             textarea.placeholder = "脱口而出的一句话 / 第一反应...";
@@ -236,6 +247,10 @@
     }
 
     function submitChoice(opt, isEntertainment) {
+        if (currentStageId == 4.8) {
+            choice4_8 = opt.action.split("：“")[0].split("：")[0]; 
+        }
+
         if(!isEntertainment) {
             myStats.reality += opt.traffic; 
             myStats.compassion += opt.compassionScore; 
@@ -245,15 +260,15 @@
             updateLotus(myStats.compassion);
         }
 
-        // 记录历史轨迹
-        db.ref(`rooms/${currentRoom}/history/${myTeam}/stage_${currentStageId}`).set({
+        let safeStageId = currentStageId.toString().replace('.', '_');
+        db.ref(`rooms/${currentRoom}/history/${myTeam}/stage_${safeStageId}`).set({
             choiceId: opt.id,
             action: opt.action
         });
 
         document.getElementById('options-container').innerHTML = "<div style='text-align:center; color:#888; padding: 20px;'>已提交，请等待大屏幕...</div>";
-
         document.getElementById('modal-text').innerText = opt.consequence;
+        
         let rContainer = document.getElementById('modal-reality-container');
         if(!isEntertainment) {
             rContainer.style.display = "block";
@@ -274,7 +289,8 @@
     function submitTextInput(textVal) {
         if(!textVal.trim()) return alert("请写点什么吧！");
         
-        db.ref(`rooms/${currentRoom}/history/${myTeam}/stage_${currentStageId}`).set({
+        let safeStageId = currentStageId.toString().replace('.', '_');
+        db.ref(`rooms/${currentRoom}/history/${myTeam}/stage_${safeStageId}`).set({
             choiceId: "TEXT_INPUT",
             action: textVal
         });
