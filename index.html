@@ -11,11 +11,10 @@
         :root { --bg: #1a1a2e; --card: #16213e; --primary: #0f3460; --accent: #e94560; --text: #e0e0e0; --warning: #f39c12; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg); color: var(--text); padding: 15px; margin: 0; display: flex; justify-content: center; min-height: 100vh; }
         .app-container { width: 100%; max-width: 500px; }
-        
         .card { position: relative; background: var(--card); padding: 25px; border-radius: 16px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); margin-bottom: 20px; }
-        
         h2, h3 { color: white; margin-top: 0; }
-        input { width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid #333; border-radius: 8px; background: #0f172a; color: white; font-size: 16px; box-sizing: border-box; }
+        input, textarea { width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid #333; border-radius: 8px; background: #0f172a; color: white; font-size: 16px; box-sizing: border-box; }
+        textarea { height: 100px; resize: vertical; }
         button { width: 100%; padding: 16px; margin-bottom: 12px; border: none; border-radius: 10px; background-color: var(--primary); color: white; font-size: 16px; font-weight: 500; text-align: left; transition: 0.2s; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.2); line-height: 1.5; }
         button:active { transform: scale(0.98); }
         button.btn-primary { background-color: var(--accent); text-align: center; font-weight: bold; }
@@ -26,33 +25,16 @@
         .modal-content { background: var(--card); padding: 30px; border-radius: 16px; width: 85%; max-width: 400px; text-align: center; }
         .leaderboard-table { width: 100%; text-align: left; border-collapse: collapse; margin-top: 15px; }
         .leaderboard-table th, .leaderboard-table td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        
-        .corner-lotus { 
-            position: absolute; 
-            top: 55%; 
-            right: -80px; 
-            transform: translateY(-50%); 
-            z-index: 50; 
-            pointer-events: none; 
-        }
-        
+        .corner-lotus { position: absolute; top: 55%; right: -80px; transform: translateY(-50%); z-index: 50; pointer-events: none; }
         @media (max-width: 720px) {
-            .corner-lotus {
-                position: relative;
-                top: auto;
-                right: auto;
-                bottom: auto;
-                transform: none;
-                margin-top: 25px; 
-                display: flex;
-                justify-content: flex-end; 
-                padding-right: 15px; 
-                opacity: 0.9;
-            }
+            .corner-lotus { position: relative; top: auto; right: auto; bottom: auto; transform: none; margin-top: 25px; display: flex; justify-content: flex-end; padding-right: 15px; opacity: 0.9; }
         }
-        
         .lotus-petal { transform-origin: 50px 50px; transform: scale(0); animation: popPetal 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes popPetal { to { transform: scale(1); } }
+        
+        .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .role-btn { padding: 12px; font-size: 14px; text-align: center; border: 2px solid transparent; }
+        .role-btn.selected { border-color: var(--accent); background-color: rgba(233, 69, 96, 0.2); }
     </style>
 </head>
 <body>
@@ -62,22 +44,25 @@
         <h2 style="text-align: center; margin-bottom: 30px;">慈心人生游戏 - M型网红</h2>
         <input type="text" id="roomCode" placeholder="输入4位房间号">
         <input type="text" id="teamName" placeholder="输入组别名称">
-        <button class="btn-primary" onclick="joinRoom()">进入游戏</button>
+        
+        <div id="role-selection-area" style="display: none; margin-bottom: 20px;">
+            <p style="margin-bottom: 5px; color: var(--warning);">自主选角模式已开启，请选择你们的习性：</p>
+            <div class="role-grid" id="role-grid"></div>
+        </div>
+
+        <button class="btn-primary" onclick="checkRoomAndJoin()">准备进入</button>
     </div>
 
     <div id="game-screen" class="card" style="display:none;">
         <div class="stat-bar" id="my-stats" style="display:none;">
-            <span style="width: 100%; margin-bottom: 5px;">被分配角色: <strong id="ui-role" style="color:var(--warning); font-size: 1.1em;"></strong></span>
+            <span style="width: 100%; margin-bottom: 5px;">角色: <strong id="ui-role" style="color:var(--warning); font-size: 1.1em;"></strong></span>
             <span>觉察力: <strong id="ui-awareness"></strong></span>
             <span>包容力: <strong id="ui-tolerance"></strong></span>
             <span>流量: <strong id="ui-reality" style="color:#4ade80; font-size: 1.2em;">0</strong></span>
         </div>
-
         <h3 id="stage-title" style="color: var(--accent); font-size: 1.5em; margin-bottom: 15px; margin-top: 0;">等待开始...</h3>
-        <p id="stage-desc" style="line-height: 1.6; color: #ddd; font-size: 1.2em; margin-bottom: 25px;"></p>
-        
+        <p id="stage-desc" style="line-height: 1.6; color: #ddd; font-size: 1.2em; margin-bottom: 25px; white-space: pre-wrap;"></p>
         <div id="options-container" style="margin-top: 15px;"></div>
-        
         <div id="corner-lotus" class="corner-lotus"></div>
     </div>
 </div>
@@ -86,7 +71,7 @@
     <div class="modal-content">
         <h3 style="color: var(--accent);">后果揭晓</h3>
         <p id="modal-text" style="line-height: 1.5; font-size: 1.1em;"></p>
-        <p><strong>流量变动:</strong> <span id="modal-reality" style="font-size: 1.4em; font-weight: bold;"></span></p>
+        <p id="modal-reality-container" style="display:none;"><strong>流量变动:</strong> <span id="modal-reality" style="font-size: 1.4em; font-weight: bold;"></span></p>
         <button class="btn-primary" onclick="document.getElementById('modal').style.display='none'" style="margin-top: 20px;">关闭等待下一关</button>
     </div>
 </div>
@@ -109,58 +94,64 @@
     let currentRoom = "";
     let myTeam = "";
     let myStats = { reality: 0, compassion: 0, awareness: 0, tolerance: 0, roleName: "" };
+    let selectedRoleId = null;
+    let isManualSelectMode = false;
+    let currentStageId = null;
 
-    function updateLotus(score) {
-        const container = document.getElementById('corner-lotus');
-        let petalCount = Math.floor(score / 10);
-        
-        if (petalCount <= 0) {
-            container.innerHTML = ""; 
-            return;
+    // 监听房间模式输入
+    document.getElementById('roomCode').addEventListener('input', (e) => {
+        let room = e.target.value.toUpperCase();
+        if(room.length >= 4) {
+            db.ref(`rooms/${room}/settings/manualSelect`).once('value').then(snap => {
+                isManualSelectMode = snap.val() === true;
+                if(isManualSelectMode) {
+                    renderRoleSelection();
+                } else {
+                    document.getElementById('role-selection-area').style.display = 'none';
+                }
+            });
         }
-        
-        if (petalCount > 8) petalCount = 8; 
+    });
 
-        let svg = `<svg viewBox="0 0 100 100" width="70" height="70" style="filter: drop-shadow(0 0 10px rgba(233, 69, 96, 0.4));">
-            <defs>
-                <linearGradient id="petalGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stop-color="#ffb6c1" />
-                    <stop offset="100%" stop-color="#e94560" />
-                </linearGradient>
-            </defs>`;
-        
-        const angles = [0, -45, 45, -90, 90, -135, 135, 180];
-        
-        for(let i = 0; i < petalCount; i++) {
-            let angle = angles[i];
-            svg += `
-            <g transform="rotate(${angle} 50 50)">
-                <path class="lotus-petal" style="animation-delay: ${i * 0.15}s;" d="M 50 50 C 30 30, 45 10, 50 5 C 55 10, 70 30, 50 50 Z" fill="url(#petalGrad)" stroke="#1a1a2e" stroke-width="1" />
-            </g>`;
-        }
-        
-        svg += `<circle cx="50" cy="50" r="4" fill="#f39c12" style="animation: popPetal 0.5s forwards; transform: scale(0); transform-origin: 50px 50px;" />`;
-        svg += `</svg>`;
-        
-        container.innerHTML = svg;
+    function renderRoleSelection() {
+        let grid = document.getElementById('role-grid');
+        grid.innerHTML = "";
+        gameData.roles.forEach(role => {
+            let btn = document.createElement('button');
+            btn.className = "role-btn";
+            btn.innerText = role.name.split(" ")[0];
+            btn.onclick = () => {
+                document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedRoleId = role.id;
+            };
+            grid.appendChild(btn);
+        });
+        document.getElementById('role-selection-area').style.display = 'block';
     }
 
-    function joinRoom() {
+    function checkRoomAndJoin() {
         currentRoom = document.getElementById('roomCode').value.toUpperCase();
         myTeam = document.getElementById('teamName').value.trim();
         if(!currentRoom || !myTeam) return alert("请填写完整！");
+        if(isManualSelectMode && !selectedRoleId) return alert("请选择一个角色！");
 
         db.ref(`rooms/${currentRoom}/teams/${myTeam}`).once('value').then(snapshot => {
             if (snapshot.exists()) {
-                alert("⚠️ 这个组别名称已经被其他队伍使用了，请换一个名称！");
+                alert("⚠️ 这个组别名称已经被使用了，请换一个名称！");
                 return;
             }
 
-            // 【关键修改点：从外部的 gameData 获取角色列表】
-            let randomRole = gameData.roles[Math.floor(Math.random() * gameData.roles.length)];
-            myStats.awareness = randomRole.initAwareness;
-            myStats.tolerance = randomRole.initCompassion;
-            myStats.roleName = randomRole.name;
+            let roleObj;
+            if(isManualSelectMode) {
+                roleObj = gameData.roles.find(r => r.id === selectedRoleId);
+            } else {
+                roleObj = gameData.roles[Math.floor(Math.random() * gameData.roles.length)];
+            }
+
+            myStats.awareness = roleObj.initAwareness;
+            myStats.tolerance = roleObj.initCompassion;
+            myStats.roleName = roleObj.name;
             myStats.compassion = 0; 
             myStats.reality = 0; 
 
@@ -170,18 +161,20 @@
 
             db.ref(`rooms/${currentRoom}/currentStage`).on('value', (snapshot) => {
                 let stage = snapshot.val();
+                currentStageId = stage;
                 document.getElementById('my-stats').style.display = 'flex';
-                document.getElementById('ui-role').innerText = myStats.roleName;
+                document.getElementById('ui-role').innerText = myStats.roleName.split(" ")[0];
                 document.getElementById('ui-reality').innerText = myStats.reality;
                 document.getElementById('ui-awareness').innerText = myStats.awareness;
                 document.getElementById('ui-tolerance').innerText = myStats.tolerance;
                 
-                // 【关键修改点：判断 stage 是否在新的 levels 数组中】
                 let stageData = gameData.levels.find(l => l.id.toString() === stage);
                 
-                if (!stage || (!stage.includes("leaderboard") && stageData)) {
+                if (!stage || (!stage.includes("leaderboard") && stageData && !stageData.isEntertainment)) {
                     document.getElementById('corner-lotus').style.display = 'flex';
                     updateLotus(myStats.compassion); 
+                } else {
+                    document.getElementById('corner-lotus').style.display = 'none';
                 }
 
                 if (stage === "leaderboard_partial") {
@@ -191,8 +184,8 @@
                 } else if (stage && stageData) {
                     renderStage(stageData);
                 } else {
-                    document.getElementById('stage-title').innerText = "游戏暂未开始";
-                    document.getElementById('stage-desc').innerText = "请留意大屏幕指示。";
+                    document.getElementById('stage-title').innerText = "等待控制台下发任务...";
+                    document.getElementById('stage-desc').innerText = "";
                     document.getElementById('options-container').innerHTML = "";
                 }
             });
@@ -201,62 +194,96 @@
 
     function renderStage(stageData) {
         document.getElementById('stage-title').innerText = stageData.title;
-        document.getElementById('stage-desc').innerText = stageData.scenario; // 使用新格式的 scenario
+        document.getElementById('stage-desc').innerText = stageData.scenario;
         let container = document.getElementById('options-container');
         container.innerHTML = "";
 
+        if (stageData.isTextInput) {
+            // 第4.9关 输入框模式
+            let textarea = document.createElement('textarea');
+            textarea.id = "textInputAnswer";
+            textarea.placeholder = "脱口而出的一句话 / 第一反应...";
+            
+            let submitBtn = document.createElement('button');
+            submitBtn.className = "btn-primary";
+            submitBtn.innerText = "提交回答";
+            submitBtn.onclick = () => submitTextInput(textarea.value);
+
+            container.appendChild(textarea);
+            container.appendChild(submitBtn);
+            return;
+        }
+
         stageData.options.forEach(opt => {
             let btn = document.createElement('button');
-            
-            // 使用新格式的 requirements
-            let req_awareness = opt.requirements ? opt.requirements.awareness : 0;
-            let req_tolerance = opt.requirements ? opt.requirements.compassion : 0;
+            let req_a = opt.requirements ? opt.requirements.awareness : 0;
+            let req_t = opt.requirements ? opt.requirements.compassion : 0;
 
-            let isAwarenessLocked = req_awareness > 0 && myStats.awareness < req_awareness;
-            let isToleranceLocked = req_tolerance > 0 && myStats.tolerance < req_tolerance;
-            let hasRequirement = req_awareness > 0 || req_tolerance > 0; 
-
-            if (isAwarenessLocked || isToleranceLocked) {
+            if (req_a > 0 && myStats.awareness < req_a || req_t > 0 && myStats.tolerance < req_t) {
                 btn.disabled = true;
                 btn.className = "locked";
-                btn.innerHTML = `<span style="font-size:1em; font-weight:bold; color:var(--accent);">🔒 属性不足 (需觉察≥${req_awareness} 包容≥${req_tolerance})</span><br><br>${opt.action}`;
+                btn.innerHTML = `<span style="font-size:1em; font-weight:bold; color:var(--accent);">🔒 属性不足 (需觉察≥${req_a} 包容≥${req_t})</span><br><br>${opt.action}`;
             } else {
-                if (hasRequirement) {
-                    btn.innerHTML = `<span style="font-size:1em; font-weight:bold; color:#4ade80;">🔓 成功解锁 (需觉察≥${req_awareness} 包容≥${req_tolerance})</span><br><br>${opt.action}`;
+                if (req_a > 0 || req_t > 0) {
+                    btn.innerHTML = `<span style="font-size:1em; font-weight:bold; color:#4ade80;">🔓 成功解锁 (需觉察≥${req_a} 包容≥${req_t})</span><br><br>${opt.action}`;
                 } else {
                     btn.innerText = opt.action;
                 }
-                btn.onclick = () => submitChoice(opt);
+                btn.onclick = () => submitChoice(opt, stageData.isEntertainment);
             }
             container.appendChild(btn);
         });
     }
 
-    function submitChoice(opt) {
-        myStats.reality += opt.traffic; // 使用新格式的 traffic
-        myStats.compassion += opt.compassionScore; // 使用新格式的 compassionScore
-        myStats.awareness += opt.awareness;
-        myStats.tolerance += opt.compassion; // 新格式中包容力字段名为 compassion
+    function submitChoice(opt, isEntertainment) {
+        if(!isEntertainment) {
+            myStats.reality += opt.traffic; 
+            myStats.compassion += opt.compassionScore; 
+            myStats.awareness += opt.awareness;
+            myStats.tolerance += opt.compassion; 
+            db.ref(`rooms/${currentRoom}/teams/${myTeam}`).update(myStats);
+            updateLotus(myStats.compassion);
+        }
 
-        db.ref(`rooms/${currentRoom}/teams/${myTeam}`).update(myStats);
-        document.getElementById('options-container').innerHTML = "<div style='text-align:center; color:#888; padding: 20px; font-size: 1.1em;'>已作出选择，请等待其他队伍...</div>";
+        // 记录历史轨迹
+        db.ref(`rooms/${currentRoom}/history/${myTeam}/stage_${currentStageId}`).set({
+            choiceId: opt.id,
+            action: opt.action
+        });
+
+        document.getElementById('options-container').innerHTML = "<div style='text-align:center; color:#888; padding: 20px;'>已提交，请等待大屏幕...</div>";
 
         document.getElementById('modal-text').innerText = opt.consequence;
-        let rChange = opt.traffic >= 0 ? `+${opt.traffic}` : opt.traffic;
-        document.getElementById('modal-reality').innerText = rChange;
-        document.getElementById('modal-reality').style.color = opt.traffic >= 0 ? '#4ade80' : '#f87171';
+        let rContainer = document.getElementById('modal-reality-container');
+        if(!isEntertainment) {
+            rContainer.style.display = "block";
+            let rChange = opt.traffic >= 0 ? `+${opt.traffic}` : opt.traffic;
+            document.getElementById('modal-reality').innerText = rChange;
+            document.getElementById('modal-reality').style.color = opt.traffic >= 0 ? '#4ade80' : '#f87171';
+            
+            document.getElementById('ui-reality').innerText = myStats.reality;
+            document.getElementById('ui-awareness').innerText = myStats.awareness;
+            document.getElementById('ui-tolerance').innerText = myStats.tolerance;
+        } else {
+            rContainer.style.display = "none";
+        }
+        
         document.getElementById('modal').style.display = 'flex';
+    }
+
+    function submitTextInput(textVal) {
+        if(!textVal.trim()) return alert("请写点什么吧！");
         
-        document.getElementById('ui-reality').innerText = myStats.reality;
-        document.getElementById('ui-awareness').innerText = myStats.awareness;
-        document.getElementById('ui-tolerance').innerText = myStats.tolerance;
-        
-        updateLotus(myStats.compassion);
+        db.ref(`rooms/${currentRoom}/history/${myTeam}/stage_${currentStageId}`).set({
+            choiceId: "TEXT_INPUT",
+            action: textVal
+        });
+
+        document.getElementById('options-container').innerHTML = "<div style='text-align:center; color:#4ade80; padding: 20px; font-weight:bold;'>已发送到大屏幕！</div>";
     }
 
     function renderLeaderboard(isFull) {
         document.getElementById('corner-lotus').style.display = 'none';
-        
         document.getElementById('stage-title').innerText = isFull ? "🚨 终局排行榜：隐藏属性大揭晓" : "📊 中场排行榜";
         document.getElementById('stage-desc').innerText = isFull ? "（不再进行排名，仅展示各队伍的最终数值）" : "查看各队伍目前的进度表现。";
         
@@ -271,29 +298,40 @@
 
             teamsArray.forEach((t, index) => {
                 let rankIcon = "";
-                
                 if (!isFull) {
-                    if (index === 0) rankIcon = `<span style="font-size:1.3em;">🥇</span> `;
-                    else if (index === 1) rankIcon = `<span style="font-size:1.3em;">🥈</span> `;
-                    else if (index === 2) rankIcon = `<span style="font-size:1.3em;">🥉</span> `;
-                    else rankIcon = `<span style="color:#ffffff; font-size:1.2em; font-weight:bold; margin-right:8px;">${index + 1}.</span>`;
+                    if (index === 0) rankIcon = `🥇 `;
+                    else if (index === 1) rankIcon = `🥈 `;
+                    else if (index === 2) rankIcon = `🥉 `;
+                    else rankIcon = `${index + 1}. `;
                 }
-
                 tableHtml += `<tr>
-                    <td style="font-size:1.1em;">${rankIcon}<strong>${t.name}</strong><br><span style="font-size:0.8em; color:#888">${t.roleName}</span></td>
+                    <td style="font-size:1.1em;">${rankIcon}<strong>${t.name}</strong><br><span style="font-size:0.8em; color:#888">${t.roleName.split(" ")[0]}</span></td>
                     <td style="color:#4ade80; font-size:1.4em; font-weight:bold;">${t.reality}</td>`;
-                
                 if(isFull) {
-                    tableHtml += `
-                    <td style="color:var(--accent); font-size:1.4em; font-weight:bold;">${t.compassion}</td>
-                    <td style="color:#e0e0e0; font-size:1.2em; font-weight:bold; text-align:center;">${t.awareness}</td>
-                    <td style="color:#e0e0e0; font-size:1.2em; font-weight:bold; text-align:center;">${t.tolerance}</td>`;
+                    tableHtml += `<td style="color:var(--accent); font-size:1.4em; font-weight:bold;">${t.compassion}</td>
+                    <td style="color:#e0e0e0; font-size:1.2em; text-align:center;">${t.awareness}</td>
+                    <td style="color:#e0e0e0; font-size:1.2em; text-align:center;">${t.tolerance}</td>`;
                 }
                 tableHtml += `</tr>`;
             });
             tableHtml += `</table>`;
             document.getElementById('options-container').innerHTML = tableHtml;
         });
+    }
+
+    function updateLotus(score) {
+        const container = document.getElementById('corner-lotus');
+        let petalCount = Math.floor(score / 10);
+        if (petalCount <= 0) { container.innerHTML = ""; return; }
+        if (petalCount > 8) petalCount = 8; 
+        let svg = `<svg viewBox="0 0 100 100" width="70" height="70" style="filter: drop-shadow(0 0 10px rgba(233, 69, 96, 0.4));">
+            <defs><linearGradient id="petalGrad" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#ffb6c1" /><stop offset="100%" stop-color="#e94560" /></linearGradient></defs>`;
+        const angles = [0, -45, 45, -90, 90, -135, 135, 180];
+        for(let i = 0; i < petalCount; i++) {
+            svg += `<g transform="rotate(${angles[i]} 50 50)"><path class="lotus-petal" style="animation-delay: ${i * 0.15}s;" d="M 50 50 C 30 30, 45 10, 50 5 C 55 10, 70 30, 50 50 Z" fill="url(#petalGrad)" stroke="#1a1a2e" stroke-width="1" /></g>`;
+        }
+        svg += `<circle cx="50" cy="50" r="4" fill="#f39c12" style="animation: popPetal 0.5s forwards; transform: scale(0); transform-origin: 50px 50px;" /></svg>`;
+        container.innerHTML = svg;
     }
 </script>
 </body>

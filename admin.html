@@ -9,77 +9,90 @@
     <style>
         :root { --primary: #4361ee; --success: #2ecc71; --warning: #f39c12; --danger: #e74c3c; --dark: #2b2d42; --light: #f8f9fa; }
         body { font-family: 'Segoe UI', sans-serif; background-color: #e5e5e5; margin: 0; padding: 20px; color: var(--dark); }
-        .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        h2, h3, h4 { margin-top: 0; color: var(--dark); }
-        button { padding: 12px 20px; margin: 5px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; color: white; }
-        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        button { padding: 10px 15px; margin: 5px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: white; }
+        button:hover { opacity: 0.9; }
         .btn-start { background-color: var(--success); font-size: 16px; }
         .btn-stage { background-color: var(--primary); }
-        .btn-board { background-color: var(--warning); color: #fff; }
-        .btn-end { background-color: var(--danger); width: 100%; margin-top: 15px; font-size: 1.1em; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        .btn-ent { background-color: #8e44ad; }
+        .btn-end { background-color: var(--danger); width: 100%; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
         th { background-color: var(--light); }
         .room-code { font-size: 2em; color: var(--primary); letter-spacing: 2px; }
+        .toggle-container { margin-top: 15px; background: #fff3cd; padding: 10px; border-radius: 8px; border-left: 5px solid var(--warning); display: inline-block; }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <!-- 左侧：控制面板 -->
     <div class="card">
-        <h2>🎮 游戏主控台 (M型网红版)</h2>
+        <h2>🎮 游戏主控台 (六大习性版)</h2>
         <button class="btn-start" onclick="createRoom()">🚀 创建新房间</button>
         <h3 id="room-display" class="room-code">等待创建...</h3>
-
-        <div id="controls" style="display:none; margin-top: 20px;">
-            <h4>上半场推送 (无锁)</h4>
-            <div style="display: flex; flex-wrap: wrap;">
-                <button class="btn-stage" onclick="pushStage('1')">第 1 关</button>
-                <button class="btn-stage" onclick="pushStage('2')">第 2 关 (网红题)</button>
-                <button class="btn-stage" onclick="pushStage('3')">第 3 关</button>
-                <button class="btn-stage" onclick="pushStage('4')">第 4 关</button>
-                <button class="btn-stage" onclick="pushStage('4.5')" style="background-color: #8e44ad;">4.5 娱乐局</button>
+        
+        <div id="controls" style="display:none;">
+            <div class="toggle-container">
+                <label style="font-weight: bold; cursor: pointer;">
+                    <input type="checkbox" id="modeToggle" onchange="toggleMode()"> 
+                    开启“自主选角”模式 (第二局使用)
+                </label>
             </div>
+
+            <h4 style="margin-top: 20px;">上半场推送</h4>
+            <button class="btn-stage" onclick="pushStage('1')">第 1 关</button>
+            <button class="btn-stage" onclick="pushStage('2')">第 2 关</button>
+            <button class="btn-stage" onclick="pushStage('3')">第 3 关</button>
+            <button class="btn-stage" onclick="pushStage('4')">第 4 关</button>
             
-            <h4 style="margin-top: 20px;">中场排行榜 (仅展示流量)</h4>
-            <button class="btn-board" onclick="pushStage('leaderboard_partial')">📊 推送排行榜</button>
+            <h4 style="margin-top: 20px;">中场娱乐 (不计分)</h4>
+            <button class="btn-ent" onclick="pushStage('4.5')">4.5 盲点拷问</button>
+            <button class="btn-ent" onclick="pushStage('4.8')">4.8 宵夜人设</button>
+            <button class="btn-ent" onclick="pushStage('4.9')">4.9 上错菜 (打字)</button>
+            <button class="btn-stage" style="background:var(--warning)" onclick="pushStage('leaderboard_partial')">📊 推送排行榜</button>
 
             <h4 style="margin-top: 20px;">下半场推送 (带锁)</h4>
-            <div style="display: flex; flex-wrap: wrap;">
-                <button class="btn-stage" onclick="pushStage('5')">第 5 关</button>
-                <button class="btn-stage" onclick="pushStage('6')">第 6 关</button>
-                <button class="btn-stage" onclick="pushStage('7')">第 7 关</button>
-                <button class="btn-stage" onclick="pushStage('8')">第 8 关 (网红题)</button>
-            </div>
+            <button class="btn-stage" onclick="pushStage('5')">第 5 关</button>
+            <button class="btn-stage" onclick="pushStage('6')">第 6 关</button>
+            <button class="btn-stage" onclick="pushStage('7')">第 7 关</button>
+            <button class="btn-stage" onclick="pushStage('8')">第 8 关</button>
 
-            <h4 style="margin-top: 20px;">终极拷问期 (双重锁)</h4>
-            <div style="display: flex; flex-wrap: wrap;">
-                <button class="btn-stage" style="background-color: #34495e;" onclick="pushStage('9')">第 9 关</button>
-                <button class="btn-stage" style="background-color: #34495e;" onclick="pushStage('10')">第 10 关</button>
-            </div>
-
+            <h4 style="margin-top: 20px;">大结局推送</h4>
+            <button class="btn-stage" style="background:#34495e;" onclick="pushStage('9')">第 9 关</button>
+            <button class="btn-stage" style="background:#34495e;" onclick="pushStage('10')">第 10 关</button>
             <button class="btn-end" onclick="pushStage('leaderboard_full')">🚨 第10关结束：全量大揭晓</button>
         </div>
     </div>
 
-    <div class="card">
-        <h2>🏆 实时排行榜监控</h2>
-        <p style="color: #666; font-size: 14px;">(系统将自动按“流量”降序排名)</p>
-        <table id="leaderboard-table">
-            <thead>
-                <tr>
-                    <th>组别</th>
-                    <th>流量</th>
-                    <th style="color:var(--danger)">慈心分(隐藏)</th>
-                    <th>觉察力</th>
-                    <th>包容力</th>
-                </tr>
-            </thead>
-            <tbody id="teams-data">
-                <tr><td colspan="5">等待玩家加入...</td></tr>
-            </tbody>
-        </table>
+    <!-- 右侧：监控大屏 -->
+    <div>
+        <div class="card" style="margin-bottom: 20px;">
+            <h2>🏆 实时排行榜监控</h2>
+            <table id="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>组别</th>
+                        <th>角色</th>
+                        <th>流量</th>
+                        <th style="color:var(--danger)">慈心</th>
+                        <th>觉察</th>
+                        <th>包容</th>
+                    </tr>
+                </thead>
+                <tbody id="teams-data">
+                    <tr><td colspan="6">等待加入...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2 style="color: #8e44ad;">📡 实时作答弹幕 (关卡 4.8 / 4.9)</h2>
+            <div id="answers-data" style="background: #f1f2f6; padding: 15px; border-radius: 8px; min-height: 200px; max-height: 400px; overflow-y: auto; font-size: 1.1em; line-height: 1.6;">
+                等待营员提交回答...
+            </div>
+        </div>
     </div>
 </div>
 
@@ -91,10 +104,8 @@
       projectId: "life-game-4a0da",
       storageBucket: "life-game-4a0da.firebasestorage.app",
       messagingSenderId: "538025029324",
-      appId: "1:538025029324:web:a07d71ae5a02c727141c69",
-      measurementId: "G-07XZLZ2ZMD"
+      appId: "1:538025029324:web:a07d71ae5a02c727141c69"
     };
-    
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     let adminRoom = "";
@@ -103,35 +114,69 @@
         adminRoom = Math.random().toString(36).substring(2, 6).toUpperCase();
         document.getElementById('room-display').innerText = `房间号: ${adminRoom}`;
         document.getElementById('controls').style.display = 'block';
+        db.ref(`rooms/${adminRoom}/settings/manualSelect`).set(false);
         
+        // 监听队伍分数
         db.ref(`rooms/${adminRoom}/teams`).on('value', snapshot => {
             let data = snapshot.val();
             if(!data) return;
-            
             let tbody = document.getElementById('teams-data');
             tbody.innerHTML = '';
-            
-            let teamsArray = Object.keys(data).map(key => ({ name: key, ...data[key] }));
+            let teamsArray = Object.keys(data).map(k => ({ name: k, ...data[k] }));
             teamsArray.sort((a, b) => b.reality - a.reality);
             
-            teamsArray.forEach((team, index) => {
-                let rankIcon = "";
-                if (index === 0) rankIcon = `<span style="font-size:1.3em;">🥇</span> `;
-                else if (index === 1) rankIcon = `<span style="font-size:1.3em;">🥈</span> `;
-                else if (index === 2) rankIcon = `<span style="font-size:1.3em;">🥉</span> `;
-                else rankIcon = `<span style="color:#000; font-size:1.2em; font-weight:bold; margin-right:8px;">${index + 1}.</span>`;
-
+            teamsArray.forEach(team => {
                 let tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td style="font-size:1.1em;">${rankIcon}<strong>${team.name}</strong></td>
-                    <td style="color:var(--primary); font-size: 1.4em; font-weight:bold;">${team.reality}</td>
-                    <td style="color:var(--danger); font-size: 1.4em; font-weight:bold;">${team.compassion}</td>
-                    <td style="font-size: 1.2em; font-weight:bold;">${team.awareness}</td>
-                    <td style="font-size: 1.2em; font-weight:bold;">${team.tolerance}</td>
+                    <td><strong>${team.name}</strong></td>
+                    <td style="font-size:0.9em; color:#666;">${team.roleName.split(" ")[0]}</td>
+                    <td style="color:var(--primary); font-weight:bold;">${team.reality}</td>
+                    <td style="color:var(--danger); font-weight:bold;">${team.compassion}</td>
+                    <td>${team.awareness}</td>
+                    <td>${team.tolerance}</td>
                 `;
                 tbody.appendChild(tr);
             });
         });
+
+        // 监听历史记录(弹幕)
+        db.ref(`rooms/${adminRoom}/history`).on('value', snapshot => {
+            let historyData = snapshot.val();
+            if(!historyData) return;
+            let ansBox = document.getElementById('answers-data');
+            ansBox.innerHTML = '';
+            
+            // 获取当前关卡
+            db.ref(`rooms/${adminRoom}/currentStage`).once('value').then(s => {
+                let current = s.val();
+                if(!current) return;
+                
+                Object.keys(historyData).forEach(teamName => {
+                    let teamRecords = historyData[teamName];
+                    let currentRecord = teamRecords[`stage_${current}`];
+                    
+                    if(currentRecord) {
+                        let textNode = document.createElement('div');
+                        textNode.style.marginBottom = "10px";
+                        textNode.style.padding = "10px";
+                        textNode.style.background = "white";
+                        textNode.style.borderRadius = "5px";
+                        textNode.style.borderLeft = "4px solid #8e44ad";
+                        
+                        let displayAction = currentRecord.action;
+                        if(displayAction.includes("：")) displayAction = displayAction.split("：")[1]; // 处理4.8的前缀
+                        
+                        textNode.innerHTML = `<strong style="color:var(--primary)">[${teamName}]</strong> ${displayAction}`;
+                        ansBox.appendChild(textNode);
+                    }
+                });
+            });
+        });
+    }
+
+    function toggleMode() {
+        let isManual = document.getElementById('modeToggle').checked;
+        if(adminRoom) db.ref(`rooms/${adminRoom}/settings/manualSelect`).set(isManual);
     }
 
     function pushStage(stageId) {
