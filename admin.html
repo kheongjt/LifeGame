@@ -64,7 +64,6 @@
             <button class="btn-stage" style="background:#34495e;" onclick="pushStage('10')">第 10 关</button>
             <button class="btn-end" onclick="pushStage('leaderboard_full')">🚨 第10关结束：全量大揭晓</button>
 
-            <!-- 新增下载记录按钮 -->
             <button class="btn-download" onclick="downloadHistory()">📥 下载全场游戏记录 (.txt)</button>
         </div>
     </div>
@@ -90,7 +89,8 @@
         </div>
 
         <div class="card">
-            <h2 style="color: #8e44ad;">📡 实时作答弹幕 (关卡 4.8 / 4.9)</h2>
+            <!-- 标题改为动态ID，由JS接管 -->
+            <h2 id="barrage-title" style="color: #8e44ad;">📡 实时作答弹幕 (等待下发)</h2>
             <div id="answers-data" style="background: #f1f2f6; padding: 15px; border-radius: 8px; min-height: 200px; max-height: 400px; overflow-y: auto; font-size: 1.1em; line-height: 1.6;">
                 等待营员提交回答...
             </div>
@@ -110,7 +110,10 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    
     let adminRoom = "";
+    let currentAdminStage = null;
+    let globalHistoryData = null;
 
     function createRoom() {
         adminRoom = Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -118,6 +121,7 @@
         document.getElementById('controls').style.display = 'block';
         db.ref(`rooms/${adminRoom}/settings/manualSelect`).set(false);
         
+        // 监听队伍分数
         db.ref(`rooms/${adminRoom}/teams`).on('value', snapshot => {
             let data = snapshot.val();
             if(!data) return;
@@ -140,37 +144,63 @@
             });
         });
 
+        // 分开监听当前关卡号，实现刷新功能
+        db.ref(`rooms/${adminRoom}/currentStage`).on('value', snapshot => {
+            currentAdminStage = snapshot.val();
+            renderBarrage();
+        });
+
+        // 监听整体历史记录变化
         db.ref(`rooms/${adminRoom}/history`).on('value', snapshot => {
-            let historyData = snapshot.val();
-            if(!historyData) return;
-            let ansBox = document.getElementById('answers-data');
-            ansBox.innerHTML = '';
+            globalHistoryData = snapshot.val();
+            renderBarrage();
+        });
+    }
+
+    // 独立渲染弹幕的核心函数，任何关卡变化或新答案提交都会触发
+    function renderBarrage() {
+        let ansBox = document.getElementById('answers-data');
+        let titleBox = document.getElementById('barrage-title');
+        ansBox.innerHTML = '';
+
+        if (!currentAdminStage) {
+            titleBox.innerText = "📡 实时作答弹幕 (等待下发)";
+            return;
+        }
+
+        if (currentAdminStage.includes("leaderboard")) {
+            let text = currentAdminStage === "leaderboard_partial" ? "中场排行榜" : "终局大揭晓";
+            titleBox.innerText = `📡 实时动态监控 (${text})`;
+            ansBox.innerHTML = `<div style="text-align:center; color:#888; margin-top:20px;">正在展示大屏排行榜，无弹幕数据。</div>`;
+            return;
+        }
+
+        // 动态修改区域标题
+        titleBox.innerText = `📡 实时作答弹幕 (当前: 第 ${currentAdminStage} 关)`;
+
+        if (!globalHistoryData) return;
+
+        let safeStageId = currentAdminStage.toString().replace('.', '_');
+
+        Object.keys(globalHistoryData).forEach(teamName => {
+            let teamRecords = globalHistoryData[teamName];
+            let currentRecord = teamRecords[`stage_${safeStageId}`];
             
-            db.ref(`rooms/${adminRoom}/currentStage`).once('value').then(s => {
-                let current = s.val();
-                if(!current) return;
+            if(currentRecord) {
+                let textNode = document.createElement('div');
+                textNode.style.marginBottom = "10px";
+                textNode.style.padding = "10px";
+                textNode.style.background = "white";
+                textNode.style.borderRadius = "5px";
+                textNode.style.borderLeft = "4px solid #8e44ad";
                 
-                Object.keys(historyData).forEach(teamName => {
-                    let teamRecords = historyData[teamName];
-                    let safeStageId = current.toString().replace('.', '_');
-                    let currentRecord = teamRecords[`stage_${safeStageId}`];
-                    
-                    if(currentRecord) {
-                        let textNode = document.createElement('div');
-                        textNode.style.marginBottom = "10px";
-                        textNode.style.padding = "10px";
-                        textNode.style.background = "white";
-                        textNode.style.borderRadius = "5px";
-                        textNode.style.borderLeft = "4px solid #8e44ad";
-                        
-                        let displayAction = currentRecord.action;
-                        if(displayAction.includes("：“")) displayAction = displayAction.split("：“")[1].replace("”", "");
-                        
-                        textNode.innerHTML = `<strong style="color:var(--primary)">[${teamName}]</strong> ${displayAction}`;
-                        ansBox.appendChild(textNode);
-                    }
-                });
-            });
+                let displayAction = currentRecord.action;
+                // 去除冗长前缀视觉效果
+                if(displayAction.includes("：“")) displayAction = displayAction.split("：“")[1].replace("”", "");
+                
+                textNode.innerHTML = `<strong style="color:var(--primary)">[${teamName}]</strong> 选择了: <span style="color:#2c3e50;">${displayAction}</span>`;
+                ansBox.appendChild(textNode);
+            }
         });
     }
 
@@ -183,7 +213,6 @@
         db.ref(`rooms/${adminRoom}`).update({ currentStage: stageId });
     }
 
-    // 下载全场历史记录的函数
     function downloadHistory() {
         if (!adminRoom) return alert("请先创建并运行一个房间！");
         
@@ -199,7 +228,6 @@
             let history = data.history;
             let teams = data.teams || {};
 
-            // 遍历所有队伍记录
             Object.keys(history).forEach(teamName => {
                 let role = teams[teamName] ? teams[teamName].roleName : "未知角色";
                 let finalScore = teams[teamName] ? teams[teamName].reality : 0;
@@ -212,7 +240,6 @@
 
                 let teamRecords = history[teamName];
                 
-                // 对关卡按数字顺序排列 (确保 1, 4.8, 4.9, 10 顺序不乱)
                 let stages = Object.keys(teamRecords).sort((a, b) => {
                     let numA = parseFloat(a.replace('stage_', '').replace('_', '.'));
                     let numB = parseFloat(b.replace('stage_', '').replace('_', '.'));
@@ -234,7 +261,6 @@
                 content += `\n\n`;
             });
 
-            // 触发下载机制
             let blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
             let link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
