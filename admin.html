@@ -17,6 +17,7 @@
         .btn-stage { background-color: var(--primary); }
         .btn-ent { background-color: #8e44ad; }
         .btn-end { background-color: var(--danger); width: 100%; margin-top: 15px; }
+        .btn-download { background-color: #27ae60; width: 100%; margin-top: 15px; font-size: 1.1em; padding: 12px; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
         th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
         th { background-color: var(--light); }
@@ -62,6 +63,9 @@
             <button class="btn-stage" style="background:#34495e;" onclick="pushStage('9')">第 9 关</button>
             <button class="btn-stage" style="background:#34495e;" onclick="pushStage('10')">第 10 关</button>
             <button class="btn-end" onclick="pushStage('leaderboard_full')">🚨 第10关结束：全量大揭晓</button>
+
+            <!-- 新增下载记录按钮 -->
+            <button class="btn-download" onclick="downloadHistory()">📥 下载全场游戏记录 (.txt)</button>
         </div>
     </div>
 
@@ -160,7 +164,6 @@
                         textNode.style.borderLeft = "4px solid #8e44ad";
                         
                         let displayAction = currentRecord.action;
-                        // 处理 4.8 关卡冗长前缀显示在弹幕上的视觉效果
                         if(displayAction.includes("：“")) displayAction = displayAction.split("：“")[1].replace("”", "");
                         
                         textNode.innerHTML = `<strong style="color:var(--primary)">[${teamName}]</strong> ${displayAction}`;
@@ -178,6 +181,68 @@
 
     function pushStage(stageId) {
         db.ref(`rooms/${adminRoom}`).update({ currentStage: stageId });
+    }
+
+    // 下载全场历史记录的函数
+    function downloadHistory() {
+        if (!adminRoom) return alert("请先创建并运行一个房间！");
+        
+        db.ref(`rooms/${adminRoom}`).once('value').then(snap => {
+            let data = snap.val();
+            if (!data || !data.history) return alert("当前房间暂无队伍的选择记录可供下载！");
+
+            let content = `======================================\n`;
+            content += ` 慈心人生游戏 - 房间 [${adminRoom}] 完整记录\n`;
+            content += ` 导出时间: ${new Date().toLocaleString()}\n`;
+            content += `======================================\n\n`;
+
+            let history = data.history;
+            let teams = data.teams || {};
+
+            // 遍历所有队伍记录
+            Object.keys(history).forEach(teamName => {
+                let role = teams[teamName] ? teams[teamName].roleName : "未知角色";
+                let finalScore = teams[teamName] ? teams[teamName].reality : 0;
+                let finalCompassion = teams[teamName] ? teams[teamName].compassion : 0;
+                
+                content += `【 队伍：${teamName} 】\n`;
+                content += `* 扮演角色：${role}\n`;
+                content += `* 最终流量：${finalScore}  |  最终慈心分：${finalCompassion}\n`;
+                content += `--------------------------------------\n`;
+
+                let teamRecords = history[teamName];
+                
+                // 对关卡按数字顺序排列 (确保 1, 4.8, 4.9, 10 顺序不乱)
+                let stages = Object.keys(teamRecords).sort((a, b) => {
+                    let numA = parseFloat(a.replace('stage_', '').replace('_', '.'));
+                    let numB = parseFloat(b.replace('stage_', '').replace('_', '.'));
+                    return numA - numB;
+                });
+
+                stages.forEach(stageKey => {
+                    let stageNum = stageKey.replace('stage_', '').replace('_', '.');
+                    let record = teamRecords[stageKey];
+                    let actionText = record.action;
+                    
+                    if (record.choiceId === "TEXT_INPUT") {
+                        content += `[第 ${stageNum} 关] 输入了文本：\n => "${actionText}"\n\n`;
+                    } else {
+                        content += `[第 ${stageNum} 关] 选择了选项 ${record.choiceId}：\n => ${actionText}\n\n`;
+                    }
+                });
+                
+                content += `\n\n`;
+            });
+
+            // 触发下载机制
+            let blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            let link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `游戏记录_房间${adminRoom}.txt`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
     }
 </script>
 </body>
